@@ -1,0 +1,45 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "sqlMIName": {
+      "type": "string",
+      "defaultValue": "aiasqlmisvr01"
+    },
+    "keyName": {
+      "type": "string",
+      "defaultValue": "my-prod-akv_PROD-TDE_2c7e882ad0a44dc9850c1ea3824f98cb"
+    },
+    "keyURL": {
+      "type": "string",
+      "defaultValue": "https://my-prod-akv.vault.azure.net/keys/PROD-TDE/2c7e882ad0a44dc9850c1ea3824f98cb"
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "type": "Microsoft.Sql/managedInstances/keys",
+      "apiVersion": "2021-05-01-preview",
+      "name": "[concat(parameters('sqlMIName'), '/', parameters('keyName'))]",
+      "kind": "azurekeyvault",
+      "properties": {
+        "serverKeyType": "AzureKeyVault",
+        "uri": "[parameters('keyURL')]"
+      }
+    },
+    {
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/managedInstances/keys/', parameters('sqlMIName'), parameters('keyName'))]"
+      ],
+      "type": "Microsoft.Sql/managedInstances/encryptionProtector",
+      "apiVersion": "2021-05-01-preview",
+      "name": "[concat(parameters('sqlMIName'), '/current')]",
+      "properties": {
+        "autoRotationEnabled": "false",
+        "serverKeyName": "[parameters('keyName')]",
+        "serverKeyType": "AzureKeyVault"
+      }
+    }
+  ],
+  "outputs": {}
+}
